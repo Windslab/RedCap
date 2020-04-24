@@ -27,12 +27,18 @@ class Settings:
 
     CVU_Update_Url = Parser.get('CVU', 'URL')
 
-    def CVS_ReplayBtn(self, n):
+    def CVS_VacancyTitle(self):
         me = Settings()
         try:
-            d = me.driver.find_element_by_xpath(
-                "/html/body/div[6]/div/div/div[2]/div/div[5]/div/div[2]/div/div[2]/div/div/div[" + str(
-                    n) + "]/div[5]/div[1]/a[@data-qa='vacancy-serp__vacancy_response']")
+            d = me.driver.find_element_by_xpath('//*[@class="bloko-modal-header bloko-modal-header_outlined"]/div')
+            return d
+        except NoSuchElementException:
+            return False
+
+    def CVS_ReplayBtn(self, i):
+        me = Settings()
+        try:
+            d = me.driver.find_elements_by_xpath('//*[@data-qa="vacancy-serp__vacancy_response"]')[i]
             return d
         except NoSuchElementException:
             return False
@@ -44,16 +50,6 @@ class Settings:
                 '//*[@data-qa="resume-title" and text()="%s"]' % me.CVS_Name)
             if d.is_displayed():
                 return d
-        except NoSuchElementException:
-            return False
-
-    def CVS_VacancyTitle(self, n):
-        me = Settings()
-        try:
-            d = me.driver.find_element_by_xpath(
-                '/html/body/div[6]/div/div/div[2]/div/div[5]/div/div[2]/div/div[2]/div/div/div[' + str(
-                    n) + ']/div[1]/div[1]/span/span/span/a')
-            return d
         except NoSuchElementException:
             return False
 
@@ -83,27 +79,41 @@ class Settings:
         me = Settings()
         try:
             d = me.driver.find_element_by_xpath('//*[@data-qa="vacancy-response-submit-popup"]')
-            if d.is_enabled():
+            if d.is_displayed():
                 return d
             else:
                 return False
         except NoSuchElementException:
             return False
 
-    def CVU_UpdateButtonRounded(self):
+    def CVS_Limit200(self):
         me = Settings()
         try:
-            d = me.driver.find_element_by_xpath(
-                '//*[@class="bloko-button bloko-button_primary-dimmed bloko-button_small bloko-button_stretched bloko-button_rounded"][@data-qa="resume-update-button"]')
+            d = me.driver.find_element_by_xpath('//*[@data-qa="negotiations-limit-exceeded"]')
+            print(d.text)
+            print(d)
+            if d.is_displayed():
+                return d
+            else:
+                return False
+        except NoSuchElementException as e:
+            print(e)
+            return False
+
+    def CVU_UpdateButtonRounded(self, i):
+        me = Settings()
+        try:
+            d = me.driver.find_elements_by_xpath(
+                '//*[@class="bloko-button bloko-button_primary-dimmed bloko-button_small bloko-button_stretched bloko-button_rounded"][@data-qa="resume-update-button"]')[i]
             if d.is_displayed():
                 return d
         except NoSuchElementException:
             return False
 
-    def CVU_UpdateButtonDimmed(self):
+    def CVU_UpdateButtonDimmed(self, i):
         me = Settings()
         try:
-            d = me.driver.find_element_by_xpath('//*[@class="applicant-resumes-update-button"]')
+            d = me.driver.find_elements_by_xpath('//*[@class="applicant-resumes-update-button"]')[i]
             if d.is_displayed():
                 return d
         except NoSuchElementException:
@@ -131,6 +141,7 @@ class Settings:
         try:
             td = datetime.now() + timedelta(seconds=d)
             print('Next try at> ' + td.strftime('%H:%M:%S %d.%m.%Y') + ' P: ' + str(me.Parser.get('CVS', 'PAGE')))
+            return d
         except Exception:
             return False
 
@@ -162,37 +173,34 @@ class CVSend:
         while i < 50:
             try:
                 if not type(me.CVS_ReplayBtn(i)) is bool:
-                    if not type(me.CVS_VacancyTitle(i)) is bool:
-                        print(str(i) + ' ' + me.CVS_VacancyTitle(i).text +
-                              ' P: ' + str(me.Parser.get('CVS', 'PAGE')) + ' S: ' + str(me.Parser.get('CVS', 'SENT')))
-                        if len(me.CVS_ReplayBtn(i).text) == 12:
-                            me.CVS_ReplayBtn(i).click()
+                    me.CVS_ReplayBtn(i).click()
+                    me.Sleep()
+                    if not type(me.CVS_VacancyTitle()) is bool:
+                        print('N:' + str(i) + ' P:' + str(me.Parser.get('CVS', 'PAGE')) + ' ' + me.CVS_VacancyTitle().text)
+                    if not type(me.CVS_СVListName()) is bool:
+                        me.CVS_СVListName().click()
+                        me.Sleep()
+                    if not type(me.CVS_LetterRequiredLink()) is bool:
+                        me.CVS_LetterRequiredLink().click()
+                        me.Sleep()
+                    if not type(me.CVS_LetterRequiredText(me.CVS_Letter)) is bool:
+                        if not type(me.CVS_CVFormButton()) is bool:
+                            me.CVS_CVFormButton().click()
                             me.Sleep()
-                            if not type(me.CVS_СVListName()) is bool:
-                                me.CVS_СVListName().click()
-                                me.Sleep()
-                                if not type(me.CVS_LetterRequiredLink()) is bool:
-                                    me.CVS_LetterRequiredLink().click()
-                                    me.Sleep()
-                                if not type(me.CVS_LetterRequiredText(me.CVS_Letter)) is bool:
-                                    if not type(me.CVS_CVFormButton()) is bool:
-                                        if int(me.Parser.get('CVS', 'SENT')) >= 200:
-                                            system('cls')
-                                            sleep(me.Next(me.CVS_Send_24hours))
-                                        me.CVS_CVFormButton().click()
-                                        me.Sleep()
-                                        me.Parser.set('CVS', 'SENT', int(me.Parser.get('CVS', 'SENT')) + 1)
-                                        me.WriteConfig()
-                                    else:
-                                        me.driver.get(me.CVS_Send_Url + str(me.Parser.get('CVS', 'PAGE')))
+                            if not type(me.CVS_Limit200()) is bool:
+                                system('cls')
+                                sleep(me.Next(me.CVS_Send_24hours))
+                                me.CVS_CVFormButton().click()
+                        else:
+                            me.driver.get(me.CVS_Send_Url + str(me.Parser.get('CVS', 'PAGE')))
                 if i >= 50:
                     self.Pages()
                     break
                 i += 1
             except Exception:
-                me.Sleep()
-                if not me.driver.current_url == me.CVS_Send_Url + str(me.Parser.get('CVS', 'PAGE')):
-                    me.driver.get(me.CVS_Send_Url + str(me.Parser.get('CVS', 'PAGE')))
+                if i >= 50:
+                    self.Pages()
+                    break
                 i += 1
                 continue
 
@@ -205,17 +213,22 @@ class CVUpdate:
         print('The loop has been launched. Leave is as now for update it 24/7')
         print(me.Border())
         me.driver.get(me.CVU_Update_Url)
+        i = 1
         while True:
             try:
-                if not type(me.CVU_UpdateButtonRounded()) is bool:
+                if not type(me.CVU_UpdateButtonRounded(i)) is bool:
                     me.Sleep()
-                    me.CVU_UpdateButtonRounded().click()
-                if not type(me.CVU_UpdateButtonDimmed()) is bool:
+                    print(me.CVU_UpdateButtonRounded(i).text)
+                    me.CVU_UpdateButtonRounded(i).click()
+                if not type(me.CVU_UpdateButtonDimmed(i)) is bool:
                     me.Sleep()
-                    me.CVU_UpdateButtonDimmed().click()
-            except Exception:
+                    print(me.CVU_UpdateButtonDimmed(i).text)
+                    me.CVU_UpdateButtonDimmed(i).click()
+                i += 1
+            except Exception as e:
+                print(e)
+                i += 1
                 me.Sleep()
-                me.driver.refresh()
                 if not me.driver.current_url == me.CVU_Update_Url:
                     me.driver.get(me.CVU_Update_Url)
                 continue
